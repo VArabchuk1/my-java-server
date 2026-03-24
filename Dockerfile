@@ -1,21 +1,24 @@
-# =====================================
-# Dockerfile для Java-проекту demo2
-# =====================================
+# Базовий образ Maven + JDK 17
+FROM maven:3.9.4-eclipse-temurin-17-alpine AS build
 
-# Базовий образ з Java 17
-FROM eclipse-temurin:17-jdk-alpine
-
-# Робоча директорія в контейнері
+# Робоча директорія
 WORKDIR /app
 
-# Копіюємо весь проект у контейнер
+# Копіюємо проект
 COPY . .
 
-# Якщо використовуєш Maven Wrapper:
-RUN ./mvnw clean package -DskipTests || mvn clean package -DskipTests
+# Збираємо JAR без тестів
+RUN mvn clean package -DskipTests
 
-# Вказуємо JAR файл для запуску
-CMD ["java", "-jar", "target/demo2.jar"]
+# ======== Фаза запуску ========
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
 
-# Порт, який слухає сервер
+# Копіюємо зібраний JAR з попереднього образу
+COPY --from=build /app/target/demo2.jar .
+
+# Команда запуску
+CMD ["java", "-jar", "demo2.jar"]
+
+# Порт
 EXPOSE 8080
